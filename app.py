@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Path
+from typing import Optional
 
 app = FastAPI()
 
@@ -18,15 +19,15 @@ inventory = {
 @app.get("/get-item/{item_id}/{name}")
 async def get_item(item_id: int = Path(None, description="The ID of the Item you would like to view")):
     return inventory[item_id]
-    
+
 
 @app.get('/blog/unpublished')
 def unpublished():
     return {'data': 'all unpublished'}
 
 @app.get('/blog/{id}')
-def show(id: int):
-    return {'data': id}
+def show(id: int, limit: int = 10, published: bool = False, sort: Optional[str] = None):
+    return {'data': {id : f"{limit}, {published} blogs"}}
 
 
 
