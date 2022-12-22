@@ -20,6 +20,6 @@ class Post(BaseModel):
     published: bool = True
     rating: Optional[int] = None
     
-@app.post("/createposts")
+@app.post("/posts")
 def create_posts(post: Post):
     return {"data": post}
