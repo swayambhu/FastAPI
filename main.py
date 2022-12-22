@@ -46,10 +46,17 @@ def create_posts(post: Post):
     return {"data": post_dict}
 
 
+@app.get("/posts/latest")
+def get_latest_post():
+    post = my_posts[-1]
+    return {"detail": post}
+
 @app.get("/posts/{id}")
-def get_post(id: int):
+def find_post(id: int):
     if(len(my_posts) >= id):
         post = my_posts[id - 1]
     else:
         post = "Post not found"
     return {"post_detail": post}
+
+    
