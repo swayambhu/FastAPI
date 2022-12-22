@@ -29,6 +29,8 @@ my_posts = [
 async def root():
     return {"message": "Hello World"}
 
+
+
 @app.get("/posts")
 def get_posts():
     return {"data": my_posts}
@@ -42,3 +44,12 @@ def create_posts(post: Post):
     post_dict["id"] = len(my_posts)
     my_posts.append(post_dict)
     return {"data": post_dict}
+
+
+@app.get("/posts/{id}")
+def get_post(id: int):
+    if(len(my_posts) >= id):
+        post = my_posts[id - 1]
+    else:
+        post = "Post not found"
+    return {"post_detail": post}
