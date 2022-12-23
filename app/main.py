@@ -72,8 +72,13 @@ def create_posts(post: Post):
 
 @app.get("/posts/latest")
 def get_latest_post():
-    post = my_posts[-1]
-    return {"detail": post}
+    cursor.execute("""
+                    SELECT * FROM posts ORDER BY id DESC LIMIT 5
+                   """)
+    
+    posts = cursor.fetchall()
+
+    return {"data": posts}
 
 @app.get("/posts/{id}")
 def find_post(id: int, response: Response):
