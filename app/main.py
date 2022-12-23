@@ -102,8 +102,19 @@ def delete_post(id: int):
 
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    try:
-        my_posts[id - 1] = post
-        return {"message" : post}
-    except IndexError:
+    
+    cursor.execute("""
+                        UPDATE posts SET 
+                        title = %s, content = %s, published = %s 
+                        WHERE id = %s RETURNING *
+                   """, 
+                   (post.title, post.content, post.published, str(id))
+                )
+    
+    updated_post = cursor.fetchone()
+    conn.commit()
+    
+    if not updated_post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail={"post_detail": "post not found"})
+    
+    return {"data" : updated_post}
