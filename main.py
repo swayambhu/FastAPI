@@ -53,19 +53,27 @@ def get_latest_post():
 
 @app.get("/posts/{id}")
 def find_post(id: int, response: Response):
-    if(len(my_posts) >= id):
+    try:
         post = my_posts[id - 1]
         return {"post_detail": post}
-    else:
+    except IndexError:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail= {"post_detail" : "post not found"})
     
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    if(len(my_posts) >= id):
+    try:
         deleted_post = my_posts.pop(id - 1)
         return {"deleted_post": delete_post}
-    else:
+    except IndexError:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail= {"post_detail" : "post not found"})
     
+
+@app.put("/posts/{id}")
+def update_post(id: int, post: Post):
+    try:
+        my_posts[id - 1] = post
+        return {"message" : post}
+    except IndexError:
+        raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail={"post_detail": "post not found"})
