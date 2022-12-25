@@ -6,20 +6,12 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from . import models
-from .database import engine, SessionLocal
+from .database import engine, get_db
 from sqlalchemy.orm import Session
 
 models.Base.metadata.create_all(engine)
 
 app = FastAPI()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 
 
 class Post(BaseModel):
@@ -29,10 +21,8 @@ class Post(BaseModel):
 
 while True:
     try:
-        conn =  psycopg2.connect(host ='localhost', database = 'fastapi', user = 'postgres', password='S@wayambhu2000@1@2@3', cursor_factory=RealDictCursor)
-        
+        conn =  psycopg2.connect(host ='localhost', database = 'fastapi', user = 'postgres', password='S@wayambhu2000@1@2@3', cursor_factory=RealDictCursor) 
         cursor = conn.cursor()
-        
         print('Database connection was successfull')
         break
 
@@ -41,23 +31,10 @@ while True:
         print('ERROR:', error)
         time.sleep(2)
 
-    
-my_posts = [
-    {
-        'title': 'title of post 1', 
-        'content': 'content of post 1',
-        'id': 1
-    },
-    {
-        'title': 'title of post 2', 
-        'content': 'content of post 2',
-        'id': 2
-    },
-]
 
-@app.get("/sqlalchemy")
-def get_posts(db: Session = Depends(get_db)):
-    return {"status": "success"}
+
+
+
 
 @app.get("/")
 async def root():
@@ -66,9 +43,10 @@ async def root():
 
 
 @app.get("/posts")
-def get_posts():
-    cursor.execute(""" SELECT * FROM posts """)
-    posts  =  cursor.fetchall()
+def get_posts( db: Session = Depends(get_db)):
+    # cursor.execute(""" SELECT * FROM posts """)
+    # posts  =  cursor.fetchall()
+    posts = db.query(models.Posts).all()
     return {"data": posts}
 
 
