@@ -94,20 +94,23 @@ def find_post(id: int, response: Response, db: Session = Depends(get_db)):
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
+def delete_post(id: int,  db: Session = Depends(get_db)):
     
-    cursor.execute("DELETE FROM posts WHERE id = %s RETURNING *", (str(id),))
-    deleted_post = cursor.fetchone()
-    conn.commit()
+    # cursor.execute("DELETE FROM posts WHERE id = %s RETURNING *", (str(id),))
+    # deleted_post = cursor.fetchone()
+    # conn.commit()
+    post = db.query(models.Posts).filter(models.Posts.id == id)    
     
-    if not deleted_post:
+    if not post.first():
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail= {"post_detail" : "post not found"})
     
+    post.delete(synchronize_session=False)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
     
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
+def update_post(id: int, post: Post, db: Session = Depends(get_db)):
     
     cursor.execute("""
                         UPDATE posts SET 
@@ -119,7 +122,8 @@ def update_post(id: int, post: Post):
     
     updated_post = cursor.fetchone()
     conn.commit()
-    
+
+        
     if not updated_post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail={"post_detail": "post not found"})
     
