@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 import psycopg2
@@ -7,7 +7,7 @@ import time
 from . import models
 from .database import engine, get_db
 from sqlalchemy.orm import Session
-from .schemas import Post, PostCreate
+from .schemas import Post, PostCreate, UserCreate, UserOut
 
 models.Base.metadata.create_all(engine)
 
@@ -38,17 +38,17 @@ async def root():
 
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[Post])
 def get_posts( db: Session = Depends(get_db)):
     # cursor.execute(""" SELECT * FROM posts """)
     # posts  =  cursor.fetchall()
     posts = db.query(models.Posts).all()
-    return {"data": posts}
+    return posts
 
 
 
     
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model= Post)
 def create_posts(post: PostCreate, db: Session = Depends(get_db)):
     # cursor.execute("""
     #                INSERT INTO posts (title, content, published) 
@@ -64,7 +64,7 @@ def create_posts(post: PostCreate, db: Session = Depends(get_db)):
     db.commit() #commit post to database
     db.refresh(new_post) #assign created post to variable
     
-    return {"data": new_post}
+    return new_post
 
 
 @app.get("/posts/latest")
@@ -75,16 +75,16 @@ def get_latest_post():
     
     posts = cursor.fetchall()
 
-    return {"data": posts}
+    return posts
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=Post)
 def find_post(id: int, response: Response, db: Session = Depends(get_db)):
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
     # post = cursor.fetchone()
     post = db.query(models.Posts).filter(models.Posts.id == id).first()
     if not post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail= {"data" : "post not found"})
-    return {"data": post}
+    return post
 
     
 
@@ -105,7 +105,7 @@ def delete_post(id: int,  db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
     
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model= Post)
 def update_post(id: int, post: PostCreate, db: Session = Depends(get_db)):
     
     # cursor.execute("""
@@ -131,4 +131,12 @@ def update_post(id: int, post: PostCreate, db: Session = Depends(get_db)):
     
     db.commit()
     
-    return {"data" : post_query.first()}
+    return post_query.first()
+
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserOut)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
