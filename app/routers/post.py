@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[Post])
-def get_posts( db: Session = Depends(get_db)):
+def get_posts( db: Session = Depends(get_db),current_user = Depends(get_current_user)):
     # cursor.execute(""" SELECT * FROM posts """)
     # posts  =  cursor.fetchall()
     posts = db.query(models.Posts).all()
@@ -32,9 +32,8 @@ def create_posts(post: PostCreate, db: Session = Depends(get_db), current_user: 
     # new_post = cursor.fetchone()
     
     # conn.commit()
-    print(current_user)
     
-    new_post = models.Posts(**post.dict())
+    new_post = models.Posts(owner_id=current_user.id, **post.dict())
     db.add(new_post) #add post to database
     db.commit() #commit post to database
     db.refresh(new_post) #assign created post to variable
@@ -65,23 +64,27 @@ def find_post(id: int, response: Response, db: Session = Depends(get_db)):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int,  db: Session = Depends(get_db), user_id: int =  Depends(get_current_user)):
+def delete_post(id: int,  db: Session = Depends(get_db), current_user: int =  Depends(get_current_user)):
     
     # cursor.execute("DELETE FROM posts WHERE id = %s RETURNING *", (str(id),))
     # deleted_post = cursor.fetchone()
     # conn.commit()
-    post = db.query(models.Posts).filter(models.Posts.id == id)    
+    post_query = db.query(models.Posts).filter(models.Posts.id == id)    
     
-    if not post.first():
+    post = post_query.first()
+    if not post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail= {"post_detail" : "post not found"})
     
-    post.delete(synchronize_session=False)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
+    
+    post_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
     
 
 @router.put("/{id}", response_model= Post)
-def update_post(id: int, post: PostCreate, db: Session = Depends(get_db), user_id: int =  Depends(get_current_user)):
+def update_post(id: int, post: PostCreate, db: Session = Depends(get_db), current_user: int =  Depends(get_current_user)):
     
     # cursor.execute("""
     #                     UPDATE posts SET 
@@ -101,6 +104,9 @@ def update_post(id: int, post: PostCreate, db: Session = Depends(get_db), user_i
         
     if not updated_post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail={"post_detail": "post not found"})
+    
+    if updated_post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
     
     post_query.update(post.dict(), synchronize_session=False)
     
