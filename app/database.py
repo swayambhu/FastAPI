@@ -5,8 +5,9 @@ from sqlalchemy.orm import sessionmaker
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from . import config
 
-engine = create_engine("postgresql://postgres:%s@localhost/fastapi" % quote_plus("S@wayambhu2000@1@2@3"))
+engine = create_engine(f"postgresql://{config.DATABASE_USERNAME}:%s@{config.DATABASE_HOSTNAME}/{config.DATABASE_NAME}" % quote_plus(f"{config.DATABASE_PASSWORD}"))
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

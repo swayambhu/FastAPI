@@ -1,7 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
 from datetime import datetime
-    
+from pydantic.types import conint
 class PostBase(BaseModel):
     title: str
     content: str
@@ -45,3 +45,13 @@ class Token(BaseModel):
     
 class TokenData(BaseModel):
     id: Optional[str]
+    
+class Vote(BaseModel):
+    post_id: int
+    dir: int
+    
+    @validator("dir", pre=True)
+    def direction_validator(cls, value):
+        if value not in (0, 1):
+            raise ValueError("Direction must be either 0 or 1")
+        return value
