@@ -2,7 +2,7 @@ from .. import models
 from ..database import get_db
 from sqlalchemy.orm import Session
 from ..schemas import Post, PostCreate
-from typing import List
+from typing import List, Optional
 from fastapi import Response, status, HTTPException, Depends, APIRouter
 from ..oauth2 import get_current_user
 
@@ -14,10 +14,13 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[Post])
-def get_posts( db: Session = Depends(get_db),current_user = Depends(get_current_user)):
+def get_posts( db: Session = Depends(get_db),current_user = Depends(get_current_user), limit: int = 10, skip: int = 0, search: Optional[str]= ""):
     # cursor.execute(""" SELECT * FROM posts """)
     # posts  =  cursor.fetchall()
-    posts = db.query(models.Posts).all()
+    print(limit)
+    # posts = db.query(models.Posts).filter(models.Posts.owner_id == current_user.id).limit(limit).offset(skip).all()
+    posts = db.query(models.Posts).filter(models.Posts.title.contains(search)).limit(limit).offset(skip).all()
+    
     return posts
 
 
@@ -32,6 +35,7 @@ def create_posts(post: PostCreate, db: Session = Depends(get_db), current_user: 
     # new_post = cursor.fetchone()
     
     # conn.commit()
+    
     
     new_post = models.Posts(owner_id=current_user.id, **post.dict())
     db.add(new_post) #add post to database
@@ -52,12 +56,15 @@ def get_latest_post():
     return posts
 
 @router.get("/{id}", response_model=Post)
-def find_post(id: int, response: Response, db: Session = Depends(get_db)):
+def find_post(id: int, response: Response, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
     # post = cursor.fetchone()
     post = db.query(models.Posts).filter(models.Posts.id == id).first()
     if not post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail= {"data" : "post not found"})
+    
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform this action")
     return post
 
     
