@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 import time
 from . import config
 
-engine = create_engine(f"postgresql://{config.DATABASE_USERNAME}:%s@{config.DATABASE_HOSTNAME}/{config.DATABASE_NAME}" % quote_plus(f"{config.DATABASE_PASSWORD}"))
+engine = create_engine(f"postgresql+psycopg2://{config.DATABASE_USERNAME}:{config.DATABASE_PASSWORD}@{config.DATABASE_HOSTNAME}:{config.DATABASE_PORT}/{config.DATABASE_NAME}")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -26,7 +26,7 @@ def get_db():
         
 while True:
     try:
-        conn =  psycopg2.connect(host ='localhost', database = 'fastapi', user = 'postgres', password='S@wayambhu2000@1@2@3', cursor_factory=RealDictCursor) 
+        conn =  psycopg2.connect(port= 5433, host = config.DATABASE_HOSTNAME, database = config.DATABASE_NAME, user = config.DATABASE_USERNAME, password= config.DATABASE_PASSWORD, cursor_factory=RealDictCursor) 
         cursor = conn.cursor()
         print('Database connection was successfull')
         break
