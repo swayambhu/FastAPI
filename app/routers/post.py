@@ -60,7 +60,7 @@ def get_latest_post():
 def find_post(id: int, response: Response, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
     # post = cursor.fetchone()
-    post = db.query(models.Posts, func.count(models.Vote.post_id).label('votes')).join(models.Vote, models.Vote.post_id == models.Posts.id, isouter=True).group_by(models.Posts.id).first()
+    post = db.query(models.Posts, func.count(models.Vote.post_id).label('votes')).filter(models.Posts.id == id).join(models.Vote, models.Vote.post_id == models.Posts.id, isouter=True).group_by(models.Posts.id).first()
     
     if not post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail= {"data" : "post not found"})
