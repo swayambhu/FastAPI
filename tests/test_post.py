@@ -77,8 +77,9 @@ def test_unauthorised_user_create_post(client, test_user, test_posts):
 
 def test_unauthorised_user_delete_post(client, test_user, test_posts):
     res = client.delete(f"/posts/{test_posts[0].id}")
-    
     assert res.status_code == 401
+    
+    
     
 def test_delete_post_success(authorised_client, test_user, test_posts):
     res = authorised_client.delete(f"/posts/{test_posts[0].id}")
@@ -94,3 +95,48 @@ def test_delete_other_user_post(authorised_client, test_user, test_posts):
     res = authorised_client.delete(f"/posts/{test_posts[3].id}")
     
     assert res.status_code == 403
+    
+def test_update_post(authorised_client, test_user, test_posts):
+    data = {
+        "title": "updated title",
+        "content" : "updated content",
+        "id" : test_posts[0].id
+    }
+    
+    res = authorised_client.put(f'/posts/{test_posts[0].id}', json=data)
+    
+    updated_post = schemas.Post(**res.json())
+    
+    assert res.status_code == 200
+    assert updated_post.title == data['title']
+    assert updated_post.content == data['content']
+    
+def test_update_other_user_post(authorised_client, test_user, test_posts, test_user2):
+    data = {
+        "title": "updated title",
+        "content" : "updated content",
+        "id" : test_posts[3].id
+    }
+    
+    res = authorised_client.put(f'/posts/{test_posts[3].id}', json=data)
+    
+    assert res.status_code == 403
+   
+def test_unauthorised_user_update_post(client, test_user, test_posts):
+    data = {
+        "title": "updated title",
+        "content" : "updated content",
+        "id" : test_posts[3].id
+    }
+    res = client.put(f"/posts/{test_posts[0].id}",  json=data)
+    assert res.status_code == 401
+    
+def test_update_post_non_exists(authorised_client, test_user, test_posts):
+    data = {
+        "title": "updated title",
+        "content" : "updated content",
+        "id" : test_posts[3].id
+    }
+    res = authorised_client.put(f"/posts/99999",  json=data)
+    
+    assert res.status_code == 404
