@@ -26,7 +26,7 @@ def get_db():
         
 while True:
     try:
-        conn =  psycopg2.connect(port= 5433, host = config.DATABASE_HOSTNAME, database = config.DATABASE_NAME, user = config.DATABASE_USERNAME, password= config.DATABASE_PASSWORD, cursor_factory=RealDictCursor) 
+        conn =  psycopg2.connect(port= config.DATABASE_PORT, host = config.DATABASE_HOSTNAME, database = config.DATABASE_NAME, user = config.DATABASE_USERNAME, password= config.DATABASE_PASSWORD, cursor_factory=RealDictCursor) 
         cursor = conn.cursor()
         print('Database connection was successfull')
         break
